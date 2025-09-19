@@ -38,6 +38,13 @@ namespace SilklessCoop
             public float scaleX;
             public float vX;
             public float vY;
+            // Your custom features
+            public float sizeX;
+            public float sizeY;
+            public float offsetX;
+            public float offsetY;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string playerColor;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
@@ -58,6 +65,15 @@ namespace SilklessCoop
             public bool active;
             public float posX;
             public float posY;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        public struct AttackPacket : NetworkInterface.IPacket
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string id;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string attackData;
         }
     }
 

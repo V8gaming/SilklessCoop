@@ -19,32 +19,34 @@
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
         <PackageReference Include="BepInEx.Core" Version="5.*" />
         <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
+        <PackageReference Include="HarmonyX" Version="2.*" />
         <PackageReference Include="UnityEngine.Modules" Version="6000.0.50" IncludeAssets="compile" />
     </ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="TeamCherry.TK2D">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/TeamCherry.TK2D.dll</HintPath>
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/TeamCherry.TK2D.dll</HintPath>
 		</Reference>
 
 		<Reference Include="TeamCherry.Localization">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/TeamCherry.Localization.dll</HintPath>
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/TeamCherry.Localization.dll</HintPath>
 		</Reference>
 
-		<Reference Include="Assembly-CSharp">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/Assembly-CSharp.dll</HintPath>
+		<Reference Include="Assembly-CSharp" Publicize="true">
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/Assembly-CSharp.dll</HintPath>
 		</Reference>
 		
 		<Reference Include="UnityEngine.CoreModule">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
 
 		<Reference Include="UnityEngine.UI">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/UnityEngine.UI.dll</HintPath>
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/UnityEngine.UI.dll</HintPath>
 		</Reference>
 
 		<Reference Include="com.rlabrecque.steamworks.net">
-			<HintPath>../../../Hollow Knight Silksong_Data/Managed/com.rlabrecque.steamworks.net.dll</HintPath>
+			<HintPath>C:/SteamLibrary/steamapps/common/Hollow Knight Silksong/Hollow Knight Silksong_Data/Managed/com.rlabrecque.steamworks.net.dll</HintPath>
 		</Reference>
 	</ItemGroup>
   

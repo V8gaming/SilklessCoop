@@ -9,7 +9,7 @@ namespace SilklessCoop
         DEBUG
     };
 
-    internal class ModConfig
+    public class ModConfig
     {
         public KeyCode MultiplayerToggleKey;
         public ConnectionType ConnectionType;
@@ -23,6 +23,11 @@ namespace SilklessCoop
         public float PlayerOpacity;
         public float ActiveCompassOpacity;
         public float InactiveCompassOpacity;
+
+        // Your custom features
+        public bool EnableCollision;
+        public bool EnablePvP;
+        public string PlayerColor;
 
         public string Version;
     };
