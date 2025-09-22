@@ -28,6 +28,7 @@ namespace SilklessCoop
         public bool EnableCollision;
         public bool EnablePvP;
         public string PlayerColor;
+        public bool IsHost;
 
         public string Version;
     };

@@ -33,6 +33,7 @@ namespace SilklessCoop
             config.EnableCollision = Config.Bind<bool>("General", "Enable Collision", false, "Enable collision detection for remote players.").Value;
             config.EnablePvP = Config.Bind<bool>("General", "Enable PvP", false, "Enable player vs player damage from attacks.").Value;
             config.PlayerColor = Config.Bind<string>("General", "Player Color", "1,1,1", "Your color as seen by other players (R,G,B values from 0-1).").Value;
+            config.IsHost = Config.Bind<bool>("General", "Is Host", false, "Set to true if this client should act as the host (no functionality yet).").Value;
 
             config.Version = MyPluginInfo.PLUGIN_VERSION;
 

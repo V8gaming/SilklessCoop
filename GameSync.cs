@@ -54,7 +54,6 @@ namespace SilklessCoop
         // Attack system
         private bool _setup = false;
         private string _currentAttack = null;
-        private string _lastAttackData = null;
 
         // Helper methods for color parsing
         private static float parseFloat(string s)
@@ -297,7 +296,7 @@ namespace SilklessCoop
                     SimpleInterpolator newInterpolator = newObject.AddComponent<SimpleInterpolator>();
                     newInterpolator.velocity = new Vector3(packet.vX, packet.vY, 0);
 
-                    // Your custom features
+                    // Collision
                     BoxCollider2D newCollider = null;
                     if (Config.EnableCollision)
                     {
@@ -307,12 +306,14 @@ namespace SilklessCoop
                         Logger.LogInfo($"Added BoxCollider2D for player {packet.id}");
                     }
 
-                    // Copy attacks for PvP
+                    CopySpecificChild(_hornetObject, newObject, "Attacks", packet.id);
                     if (Config.EnablePvP)
                     {
-                        CopySpecificChild(_hornetObject, newObject, "Attacks", packet.id);
-                        //ReplaceNailSlashComponents(newObject);
-                        Logger.LogInfo($"Copied Attacks child and replaced NailSlash components for player {packet.id}");
+                        ReplaceNailSlashComponents(newObject);
+
+                        // Add DummyController for remote player
+                        var dummyController = newObject.AddComponent<DummyController>();
+                        Logger.LogInfo($"Copied Attacks child, replaced NailSlash components, and added DummyController for player {packet.id}");
                     }
 
                     _playerObjects[packet.id] = newObject;
@@ -433,36 +434,54 @@ namespace SilklessCoop
                     attackData = attack
                 });
 
-                if (Config.PrintDebugOutput) Logger.LogInfo($"Sent attack packet: {attack}");
+                Logger.LogInfo($"Sent attack packet: {attack}"); // Always log for debugging
             }
         }
 
         private void OnAttackPacket(PacketTypes.AttackPacket packet)
         {
-            if (Config.PrintDebugOutput) Logger.LogInfo($"Received attack packet from {packet.id}: {packet.attackData}");
+            var receiveTime = Time.realtimeSinceStartup;
+            Logger.LogInfo($"[NETWORK PERF] Received attack packet from {packet.id} at {receiveTime:F3}s: {packet.attackData}");
 
             if (Config.EnablePvP)
             {
+                var applyStartTime = Time.realtimeSinceStartup;
                 ApplyAttack(packet.attackData, packet.id);
+                Logger.LogInfo($"[NETWORK PERF] ApplyAttack call took {(Time.realtimeSinceStartup - applyStartTime)*1000:F2}ms");
+            }
+            else
+            {
+                Logger.LogInfo($"[NETWORK PERF] PvP disabled, skipping attack application");
             }
         }
 
         public void ApplyAttack(string attackData, string playerId)
         {
-            if (!_setup || string.IsNullOrEmpty(attackData) || !_playerObjects.ContainsKey(playerId)) return;
+            var startTime = Time.realtimeSinceStartup;
+            Logger.LogInfo($"[ATTACK PERF] Starting ApplyAttack for player {playerId} at {startTime:F3}s");
+
+            if (!_setup || string.IsNullOrEmpty(attackData) || !_playerObjects.ContainsKey(playerId))
+            {
+                Logger.LogInfo($"[ATTACK PERF] Early return - setup:{_setup}, data empty:{string.IsNullOrEmpty(attackData)}, player exists:{_playerObjects.ContainsKey(playerId)}");
+                return;
+            }
 
             try
             {
                 var playerObject = _playerObjects[playerId];
-                if (playerObject == null) return;
+                if (playerObject == null)
+                {
+                    Logger.LogInfo($"[ATTACK PERF] Player object is null, returning");
+                    return;
+                }
 
                 Logger.LogInfo($"Remote player {playerId} performed attack: {attackData}");
 
-                // Parse the enhanced attack data format: direction|playerData|slashComponent|damager
+                // Parse the attack data format: direction|crest|slashComponent|longNeedle
                 string attackDirection = "Unknown";
-                string playerDataInfo = "null";
+                string crestName = "null";
                 string slashComponentInfo = "null";
-                string damagerInfo = "null";
+                bool hasLongNeedle = false;
 
                 try
                 {
@@ -470,11 +489,11 @@ namespace SilklessCoop
                     if (attackParts.Length >= 4)
                     {
                         attackDirection = attackParts[0];
-                        playerDataInfo = attackParts[1];
+                        crestName = attackParts[1];
                         slashComponentInfo = attackParts[2];
-                        damagerInfo = attackParts[3];
+                        hasLongNeedle = attackParts[3] == "1";
 
-                        Logger.LogInfo($"Parsed attack data - Direction: {attackDirection}, PlayerData: {playerDataInfo}, SlashComponent: {slashComponentInfo}, Damager: {damagerInfo}");
+                        Logger.LogInfo($"Parsed attack data - Direction: {attackDirection}, Crest: {crestName}, SlashComponent: {slashComponentInfo}, LongNeedle: {hasLongNeedle}");
                     }
                     else
                     {
@@ -488,18 +507,41 @@ namespace SilklessCoop
                     Logger.LogError($"Error parsing enhanced attack data: {parseEx}");
                 }
 
+                // Update the DummyController with attack data
+                var dummyTime = Time.realtimeSinceStartup;
+                var dummyController = playerObject.GetComponent<DummyController>();
+                if (dummyController != null)
+                {
+                    dummyController.UpdateFromAttackData(attackDirection, hasLongNeedle, crestName);
+                    Logger.LogInfo($"[ATTACK PERF] Updated DummyController for player {playerId} - took {(Time.realtimeSinceStartup - dummyTime)*1000:F2}ms");
+                }
+                else
+                {
+                    Logger.LogWarning($"[ATTACK PERF] No DummyController found on player {playerId}");
+                }
+
                 // Trigger slash effects on remote player using our custom Slash components
+                var slashTime = Time.realtimeSinceStartup;
                 var slashComponents = playerObject.GetComponentsInChildren<Slash>();
+                Logger.LogInfo($"[ATTACK PERF] Found {slashComponents.Length} Slash components");
+
+                int slashCount = 0;
                 foreach (var slash in slashComponents)
                 {
                     if (slash != null)
                     {
+                        var configTime = Time.realtimeSinceStartup;
                         // Configure slash with parsed HeroController data before starting
-                        slash.ConfigureFromHeroControllerData(attackDirection, playerDataInfo, slashComponentInfo, damagerInfo);
+                        slash.ConfigureFromHeroControllerData(attackDirection, crestName, slashComponentInfo, "null");
+                        Logger.LogInfo($"[ATTACK PERF] Configured slash {slash.gameObject.name} - took {(Time.realtimeSinceStartup - configTime)*1000:F2}ms");
+
+                        var startSlashTime = Time.realtimeSinceStartup;
                         slash.StartSlash();
-                        Logger.LogInfo($"Triggered configured slash on {slash.gameObject.name}");
+                        Logger.LogInfo($"[ATTACK PERF] Started slash on {slash.gameObject.name} - took {(Time.realtimeSinceStartup - startSlashTime)*1000:F2}ms");
+                        slashCount++;
                     }
                 }
+                Logger.LogInfo($"[ATTACK PERF] Processed {slashCount} slashes - total time {(Time.realtimeSinceStartup - slashTime)*1000:F2}ms");
 
                 if (slashComponents.Length == 0)
                 {
@@ -508,7 +550,18 @@ namespace SilklessCoop
             }
             catch (Exception e)
             {
-                Logger.LogError($"Error applying remote attack: {e}");
+                Logger.LogError($"[ATTACK PERF] Error applying remote attack: {e}");
+                Logger.LogError($"[ATTACK PERF] Stack trace: {e.StackTrace}");
+            }
+            finally
+            {
+                var totalTime = (Time.realtimeSinceStartup - startTime) * 1000;
+                Logger.LogInfo($"[ATTACK PERF] ApplyAttack completed in {totalTime:F2}ms for player {playerId}");
+
+                if (totalTime > 16.67f) // More than one frame at 60fps
+                {
+                    Logger.LogWarning($"[ATTACK PERF] WARNING: Attack processing took {totalTime:F2}ms - this will cause lag!");
+                }
             }
         }
 
